@@ -1,0 +1,9 @@
+C:\Users\Azirel\source\repos\Dijkstra\Dijkstra\bin\Debug\Dijkstra.exe.config
+C:\Users\Azirel\source\repos\Dijkstra\Dijkstra\bin\Debug\Dijkstra.exe
+C:\Users\Azirel\source\repos\Dijkstra\Dijkstra\bin\Debug\Dijkstra.pdb
+C:\Users\Azirel\source\repos\Dijkstra\Dijkstra\bin\Debug\Dijkstra.NET.dll
+C:\Users\Azirel\source\repos\Dijkstra\Dijkstra\obj\Debug\Dijkstra.csprojAssemblyReference.cache
+C:\Users\Azirel\source\repos\Dijkstra\Dijkstra\obj\Debug\Dijkstra.csproj.CoreCompileInputs.cache
+C:\Users\Azirel\source\repos\Dijkstra\Dijkstra\obj\Debug\Dijkstra.csproj.CopyComplete
+C:\Users\Azirel\source\repos\Dijkstra\Dijkstra\obj\Debug\Dijkstra.exe
+C:\Users\Azirel\source\repos\Dijkstra\Dijkstra\obj\Debug\Dijkstra.pdb
