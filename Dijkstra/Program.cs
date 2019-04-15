@@ -11,8 +11,8 @@ using System.Runtime.Serialization;
 using System.Text.RegularExpressions;
 using System.Text;
 using System;
-using Dijkstra.NET.Graph;
-using Dijkstra.NET.ShortestPath;
+//using Dijkstra.NET.Graph;
+//using Dijkstra.NET.ShortestPath;
 
 class Solution
 {
@@ -165,7 +165,7 @@ class Solution
 	{
 		//string FilePath = "F:\\Temp\\CustomGraph1";
 		//string FilePath = "F:\\Temp\\CustomGraph";
-		string FilePath = Path.Combine(Directory.GetCurrentDirectory(), @"GraphCase6");
+		string FilePath = Path.Combine(Directory.GetParent(Directory.GetParent(Directory.GetParent(Directory.GetCurrentDirectory()).FullName).FullName).FullName, @"GraphCase6");
 
 		Console.WriteLine(Path.GetFullPath(FilePath));
 
