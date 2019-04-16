@@ -50,7 +50,7 @@ class Solution
 	protected class Graph<T> where T : class
 	{
 		protected Dictionary<T, Dictionary<T, int>> Net = new Dictionary<T, Dictionary<T, int>>();
-		protected List<T> Queue; //prioritized queue
+		protected Heap<T> Queue; //prioritized queue
 		protected HashSet<T> DoneNodes = new HashSet<T>();
 
 		public void Add(T node)
@@ -82,7 +82,8 @@ class Solution
 		public Dictionary<T, int> ShortestLenghts(T from)
 		{
 			var distances = new Dictionary<T, int>(Net.Count);
-			Queue = new List<T>();
+			Queue = new Heap<T>(Net.Count);
+			Queue.Comparer = (a, b) => distances[b] - distances[a];
 			var comparer = new Comparer<T>(ref distances);
 
 			foreach (var node in Net)
@@ -107,7 +108,7 @@ class Solution
 					break;
 				currentNode = Min(Queue, (element) => distances[element]);
 				Queue.Remove(currentNode);
-			} while (true);
+			} while (currentNode != null);
 
 			return distances;
 		}
@@ -155,6 +156,85 @@ class Solution
 			if (removeResult == false)
 				Console.WriteLine("We are so fucked up");
 			return result;
+		}
+	}
+
+	public class Heap<T> where T : class
+	{
+		public Func<T, T, int> Comparer;
+		public int Count { get { return lastElementIndex + 1; } }
+
+		protected T[] mainArray;
+		protected T temp;
+		protected int lastElementIndex = -1;
+
+		public Heap(int capacity)
+		{
+			mainArray = new T[capacity];
+		}
+
+		public bool Contains(T element)
+		{
+			return mainArray.Contains(element);
+		}
+
+		protected void SiftDown(int currentIndex)
+		{
+			int left = 2 * currentIndex + 1;
+			int right = 2 * currentIndex + 2;
+			int largestElementIndex = currentIndex;
+			if (left <= lastElementIndex && Comparer(mainArray[left], mainArray[largestElementIndex]) > 0)
+				largestElementIndex = left;
+			if (right <= lastElementIndex && Comparer(mainArray[right], mainArray[largestElementIndex]) > 0)
+				largestElementIndex = right;
+			if (largestElementIndex != currentIndex)
+			{
+				Swap(currentIndex, largestElementIndex);
+				SiftDown(largestElementIndex);
+			}
+		}
+
+		protected void SiftUp(int currentIndex)
+		{
+			while (currentIndex > -1)
+			{
+				int parent = (currentIndex - 1) / 2;
+				if (Comparer(mainArray[currentIndex], mainArray[parent]) <= 0)
+					return;
+				Swap(currentIndex, parent);
+				currentIndex = parent;
+			}
+		}
+
+		protected void BuildHeap()
+		{
+			for (int i = lastElementIndex / 2; i >= 0; --i)
+				SiftDown(i);
+		}
+
+		public void Add(T element)
+		{
+			mainArray[++lastElementIndex] = element;
+			SiftUp(lastElementIndex);
+		}
+
+		public T ExtractTop()
+		{
+			if (lastElementIndex < 0)
+				return null;
+			T result = (T)mainArray[0];
+			Swap(0, lastElementIndex);
+			mainArray[lastElementIndex] = null;
+			--lastElementIndex;
+			SiftDown(0);
+			return result;
+		}
+
+		protected void Swap(int a, int b)
+		{
+			temp = mainArray[a];
+			mainArray[a] = mainArray[b];
+			mainArray[b] = temp;
 		}
 	}
 
