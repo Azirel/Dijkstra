@@ -81,14 +81,14 @@ class Solution
 
 		public Dictionary<T, int> ShortestLenghts(T from)
 		{
-			var result = new Dictionary<T, int>(Net.Count);
+			var distances = new Dictionary<T, int>(Net.Count);
 			Queue = new List<T>();
-			var comparer = new Comparer<T>(ref result);
+			var comparer = new Comparer<T>(ref distances);
 
 			foreach (var node in Net)
-				result[node.Key] = int.MaxValue;
+				distances[node.Key] = int.MaxValue;
 
-			result[from] = 0;
+			distances[from] = 0;
 
 			var currentNode = from;
 			int currentLenght;
@@ -96,23 +96,37 @@ class Solution
 			{
 				foreach (var connection in Net[currentNode])
 				{
-					currentLenght = result[currentNode] + connection.Value;
-					if (currentLenght < result[connection.Key])
-						result[connection.Key] = currentLenght;
+					currentLenght = distances[currentNode] + connection.Value;
+					if (currentLenght < distances[connection.Key])
+						distances[connection.Key] = currentLenght;
 					if (!DoneNodes.Contains(connection.Key) && !Queue.Contains(connection.Key))
-					{
 						Queue.Add(connection.Key);
-						Queue.Sort(comparer);
-					}
 				}
 				DoneNodes.Add(currentNode);
 				if (Queue.Count == 0)
 					break;
-				currentNode = Queue[0];
-				Queue.RemoveAt(0);
+				currentNode = Min(Queue, (element) => distances[element]);
+				Queue.Remove(currentNode);
 			} while (true);
 
-			return result;
+			return distances;
+		}
+
+		public T Min<T>(IEnumerable<T> sequence, Func<T, int> comperor)
+		{
+			float currentMinValue = float.MaxValue;
+			T currentMinItem = sequence.First();
+			float comperissonValue;
+			foreach (var item in sequence)
+			{
+				comperissonValue = comperor(item);
+				if (comperissonValue < currentMinValue)
+				{
+					currentMinItem = item;
+					currentMinValue = comperissonValue;
+				}
+			}
+			return currentMinItem;
 		}
 
 		protected class Comparer<T> : IComparer<T>
