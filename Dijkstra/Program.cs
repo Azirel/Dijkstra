@@ -30,9 +30,8 @@ class Solution
 		}
 
 		foreach (var edge in edges)
-		{
 			graph.AddNotOrientedConnection(convertionStrcuture[edge[0]], convertionStrcuture[edge[1]], edge[2]);
-		}
+
 		var shortestWays = graph.ShortestLenghts(convertionStrcuture[s]);
 		var result = new List<int>();
 		for (int i = 1; i <= n; ++i)
@@ -51,7 +50,7 @@ class Solution
 	protected class Graph<T> where T : class
 	{
 		protected Dictionary<T, Dictionary<T, int>> Net = new Dictionary<T, Dictionary<T, int>>();
-		protected SortedSet<T> Queue; //prioritized queue
+		protected List<T> Queue; //prioritized queue
 		protected HashSet<T> DoneNodes = new HashSet<T>();
 
 		public void Add(T node)
@@ -83,7 +82,8 @@ class Solution
 		public Dictionary<T, int> ShortestLenghts(T from)
 		{
 			var result = new Dictionary<T, int>(Net.Count);
-			Queue = new SortedSet<T>(new Comparer<T>(ref result));
+			Queue = new List<T>();
+			var comparer = new Comparer<T>(ref result);
 
 			foreach (var node in Net)
 				result[node.Key] = int.MaxValue;
@@ -98,16 +98,19 @@ class Solution
 				{
 					currentLenght = result[currentNode] + connection.Value;
 					if (currentLenght < result[connection.Key])
-					{
-						Queue.Remove(connection.Key);
 						result[connection.Key] = currentLenght;
-						if (!DoneNodes.Contains(connection.Key))
-							Enqueue(ref Queue, connection.Key);
+					if (!DoneNodes.Contains(connection.Key) && !Queue.Contains(connection.Key))
+					{
+						Queue.Add(connection.Key);
+						Queue.Sort(comparer);
 					}
 				}
 				DoneNodes.Add(currentNode);
-				currentNode = Queue.Count == 0 ? null : Dequeue(ref Queue);
-			} while (currentNode != null);
+				if (Queue.Count == 0)
+					break;
+				currentNode = Queue[0];
+				Queue.RemoveAt(0);
+			} while (true);
 
 			return result;
 		}
@@ -122,12 +125,7 @@ class Solution
 			}
 			int IComparer<T>.Compare(T x, T y)
 			{
-				distanceDifference = Distances[x] - Distances[y];
-				if (x.GetHashCode() == y.GetHashCode())
-					return 0;
-				else if (distanceDifference == 0)
-					return -1;
-				return distanceDifference;
+				return Distances[x] - Distances[y];
 			}
 		}
 
@@ -165,16 +163,26 @@ class Solution
 	{
 		//string FilePath = "F:\\Temp\\CustomGraph1";
 		//string FilePath = "F:\\Temp\\CustomGraph";
-		string FilePath = Path.Combine(Directory.GetParent(Directory.GetParent(Directory.GetParent(Directory.GetCurrentDirectory()).FullName).FullName).FullName, @"GraphCase6");
-
-		Console.WriteLine(Path.GetFullPath(FilePath));
+		string InputFilePath = Path.Combine(Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent.FullName, "GraphTest1[Input]");
+		string OutputFilePath = Path.Combine(Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent.FullName, "GraphTest1[Output]");
 
 		var _inputs = new List<int>();
-		foreach (var line in File.ReadAllText(FilePath).Split('\n'))
+		foreach (var line in File.ReadAllText(InputFilePath).Split('\n'))
 			foreach (var @int in line.Split(' '))
 				_inputs.Add(Convert.ToInt32(@int));
 
+		var givenOutput = new List<List<int>>();
+		int counter = 0;
+		foreach (var line in File.ReadAllText(OutputFilePath).Split('\n'))
+		{
+			givenOutput.Add(new List<int>());
+			foreach (var @int in line.Split(' '))
+				givenOutput[counter].Add(Convert.ToInt32(@int));
+			++counter;
+		}
+
 		int currentReadPosition = 0;
+		int[][] calculatedOutput = new int[_inputs[0]][];
 		for (int graphsCount = 0; graphsCount < _inputs[0]; ++graphsCount)
 		{
 			int n = _inputs[++currentReadPosition];
@@ -185,8 +193,14 @@ class Solution
 			int s = _inputs[++currentReadPosition];
 
 			int[] result = shortestReach(n, edges, s);
+			calculatedOutput[graphsCount] = result;
 			Console.WriteLine(string.Join(" ", result));
 		}
+
+		for (int i = 0; i < calculatedOutput.Length; i++)
+			for (int j = 0; j < calculatedOutput[i].Length; ++j)
+				if (calculatedOutput[i][j] != givenOutput[i][j])
+					Console.WriteLine(string.Format("[{0}] : [{1}]", i, j));
 
 		Console.ReadKey();
 	}
