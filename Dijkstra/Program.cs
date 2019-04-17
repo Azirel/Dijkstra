@@ -49,133 +49,77 @@ class Solution
 
 	protected class Graph<T> where T : class
 	{
-		protected Dictionary<T, Dictionary<T, int>> Net = new Dictionary<T, Dictionary<T, int>>();
-		protected Heap<T> Queue; //prioritized queue
-		protected HashSet<T> DoneNodes = new HashSet<T>();
+		protected Dictionary<T, Dictionary<T, int>> net = new Dictionary<T, Dictionary<T, int>>();
+		protected PrioritizedQueue<T> queue; //prioritized queue
+		protected HashSet<T> doneNodes = new HashSet<T>();
 
 		public void Add(T node)
 		{
-			Net.Add(node, new Dictionary<T, int>());
+			net.Add(node, new Dictionary<T, int>());
 		}
 
 		public void AddNotOrientedConnection(T from, T to, int weight)
 		{
-			if (Net[from].ContainsKey(to) || Net[to].ContainsKey(from))
+			if (net[from].ContainsKey(to) || net[to].ContainsKey(from))
 			{
-				Net[from][to] = weight < Net[from][to] ? weight : Net[from][to];
-				Net[to][from] = weight < Net[to][from] ? weight : Net[to][from];
+				net[from][to] = weight < net[from][to] ? weight : net[from][to];
+				net[to][from] = weight < net[to][from] ? weight : net[to][from];
 			}
 			else
 			{
-				Net[from].Add(to, weight);
-				Net[to].Add(from, weight);
+				net[from].Add(to, weight);
+				net[to].Add(from, weight);
 			}
 		}
 
 		public void AddOrientedConnection(T from, T to, int weight)
 		{
-			if (Net[from].ContainsKey(to))
-				Net[from][to] = weight < Net[from][to] ? weight : Net[from][to];
-			else Net[from].Add(to, weight);
+			if (net[from].ContainsKey(to))
+				net[from][to] = weight < net[from][to] ? weight : net[from][to];
+			else net[from].Add(to, weight);
 		}
 
 		public Dictionary<T, int> ShortestLenghts(T from)
 		{
-			var distances = new Dictionary<T, int>(Net.Count);
-			Queue = new Heap<T>(Net.Count);
-			Queue.Comparer = (a, b) => distances[b] - distances[a];
-			var comparer = new Comparer<T>(ref distances);
-
-			foreach (var node in Net)
+			var distances = new Dictionary<T, int>(net.Count);
+			queue = new PrioritizedQueue<T>() { Prioritizer = (a, b) => distances[b] - distances[a] };
+			foreach (var node in net)
 				distances[node.Key] = int.MaxValue;
-
 			distances[from] = 0;
-
 			var currentNode = from;
 			int currentLenght;
 			do
 			{
-				foreach (var connection in Net[currentNode])
+				foreach (var connection in net[currentNode])
 				{
 					currentLenght = distances[currentNode] + connection.Value;
 					if (currentLenght < distances[connection.Key])
 						distances[connection.Key] = currentLenght;
-					if (!DoneNodes.Contains(connection.Key) && !Queue.Contains(connection.Key))
-						Queue.Add(connection.Key);
+					if (!doneNodes.Contains(connection.Key))
+					{
+						queue.Enqueue(connection.Key);
+						queue.UpdateValue(connection.Key);
+					}
 				}
-				DoneNodes.Add(currentNode);
-				if (Queue.Count == 0)
-					break;
-				currentNode = Min(Queue, (element) => distances[element]);
-				Queue.Remove(currentNode);
+				doneNodes.Add(currentNode);
+				currentNode = queue.ExtractTop();
 			} while (currentNode != null);
-
 			return distances;
-		}
-
-		public T Min<T>(IEnumerable<T> sequence, Func<T, int> comperor)
-		{
-			float currentMinValue = float.MaxValue;
-			T currentMinItem = sequence.First();
-			float comperissonValue;
-			foreach (var item in sequence)
-			{
-				comperissonValue = comperor(item);
-				if (comperissonValue < currentMinValue)
-				{
-					currentMinItem = item;
-					currentMinValue = comperissonValue;
-				}
-			}
-			return currentMinItem;
-		}
-
-		protected class Comparer<T> : IComparer<T>
-		{
-			protected Dictionary<T, int> Distances;
-			protected int distanceDifference;
-			public Comparer(ref Dictionary<T, int> distances)
-			{
-				Distances = distances;
-			}
-			int IComparer<T>.Compare(T x, T y)
-			{
-				return Distances[x] - Distances[y];
-			}
-		}
-
-		protected void Enqueue<T>(ref SortedSet<T> source, T element)
-		{
-			source.Add(element);
-		}
-
-		protected T Dequeue<T>(ref SortedSet<T> source)
-		{
-			T result = source.First();
-			bool removeResult = source.Remove(result);
-			if (removeResult == false)
-				Console.WriteLine("We are so fucked up");
-			return result;
 		}
 	}
 
-	public class Heap<T> where T : class
+	protected class PrioritizedQueue<T> where T : class
 	{
-		public Func<T, T, int> Comparer;
-		public int Count { get { return lastElementIndex + 1; } }
+		public Func<T, T, int> Prioritizer;
+		public int Count { get { return mainArray.Count; } }
 
-		protected T[] mainArray;
+		protected List<T> mainArray = new List<T>();
+		protected Dictionary<T, int> Positions = new Dictionary<T, int>();
 		protected T temp;
-		protected int lastElementIndex = -1;
-
-		public Heap(int capacity)
-		{
-			mainArray = new T[capacity];
-		}
 
 		public bool Contains(T element)
 		{
-			return mainArray.Contains(element);
+			return Positions.ContainsKey(element);
 		}
 
 		protected void SiftDown(int currentIndex)
@@ -183,9 +127,9 @@ class Solution
 			int left = 2 * currentIndex + 1;
 			int right = 2 * currentIndex + 2;
 			int largestElementIndex = currentIndex;
-			if (left <= lastElementIndex && Comparer(mainArray[left], mainArray[largestElementIndex]) > 0)
+			if (left <= mainArray.Count - 1 && Prioritizer(mainArray[left], mainArray[largestElementIndex]) > 0)
 				largestElementIndex = left;
-			if (right <= lastElementIndex && Comparer(mainArray[right], mainArray[largestElementIndex]) > 0)
+			if (right <= mainArray.Count - 1 && Prioritizer(mainArray[right], mainArray[largestElementIndex]) > 0)
 				largestElementIndex = right;
 			if (largestElementIndex != currentIndex)
 			{
@@ -199,39 +143,57 @@ class Solution
 			while (currentIndex > -1)
 			{
 				int parent = (currentIndex - 1) / 2;
-				if (Comparer(mainArray[currentIndex], mainArray[parent]) <= 0)
+				if (Prioritizer(mainArray[currentIndex], mainArray[parent]) <= 0)
 					return;
 				Swap(currentIndex, parent);
 				currentIndex = parent;
 			}
 		}
 
+		public void UpdateValue(T element)
+		{
+			if (Positions.ContainsKey(element))
+			{
+				int elementIndex = Positions[element];
+				if (Prioritizer(mainArray[elementIndex], mainArray[(elementIndex - 1) / 2]) > 0)
+					SiftUp(elementIndex);
+				else
+					SiftDown(elementIndex);
+			}
+		}
+
 		protected void BuildHeap()
 		{
-			for (int i = lastElementIndex / 2; i >= 0; --i)
+			for (int i = (mainArray.Count - 1) / 2; i >= 0; --i)
 				SiftDown(i);
 		}
 
-		public void Add(T element)
+		public void Enqueue(T element)
 		{
-			mainArray[++lastElementIndex] = element;
-			SiftUp(lastElementIndex);
+			if (!Contains(element))
+			{
+				mainArray.Add(element);
+				Positions.Add(element, mainArray.Count - 1);
+				SiftUp(mainArray.Count - 1);
+			}
 		}
 
 		public T ExtractTop()
 		{
-			if (lastElementIndex < 0)
+			if (mainArray.Count < 1)
 				return null;
-			T result = (T)mainArray[0];
-			Swap(0, lastElementIndex);
-			mainArray[lastElementIndex] = null;
-			--lastElementIndex;
+			T result = mainArray[0];
+			Swap(0, mainArray.Count - 1);
+			mainArray.RemoveAt(mainArray.Count - 1);
+			Positions.Remove(result);
 			SiftDown(0);
 			return result;
 		}
 
 		protected void Swap(int a, int b)
 		{
+			Positions[mainArray[a]] = b;
+			Positions[mainArray[b]] = a;
 			temp = mainArray[a];
 			mainArray[a] = mainArray[b];
 			mainArray[b] = temp;
@@ -241,22 +203,10 @@ class Solution
 	static void Main(string[] args)
 	{
 		RunGraphTest();
-
-		//var sortedSet = new SortedSet<int>();
-		//sortedSet.Add(5);
-		//sortedSet.Add(-5);
-		//sortedSet.Add(0);
-		//foreach (var item in sortedSet)
-		//	Console.Write(item + " ");
-		//Console.ReadKey();
 	}
-
-
 
 	protected static void RunGraphTest()
 	{
-		//string FilePath = "F:\\Temp\\CustomGraph1";
-		//string FilePath = "F:\\Temp\\CustomGraph";
 		string InputFilePath = Path.Combine(Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent.FullName, "GraphTest1[Input]");
 		string OutputFilePath = Path.Combine(Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent.FullName, "GraphTest1[Output]");
 
