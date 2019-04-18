@@ -16,7 +16,6 @@ using System;
 
 class Solution
 {
-
 	// Complete the shortestReach function below.
 	static int[] shortestReach(int n, int[][] edges, int s)
 	{
@@ -202,7 +201,12 @@ class Solution
 
 	static void Main(string[] args)
 	{
-		RunGraphTest();
+		//RunGraphTest();
+		int a = 0;
+		int b = 0;
+		var test = new Dictionary<int, int> { { a, 0 }, { b, 0 } };
+		Console.WriteLine(test.Count);
+		//Console.WriteLine(CustomReadLine());
 	}
 
 	protected static void RunGraphTest()
@@ -247,5 +251,19 @@ class Solution
 					Console.WriteLine(string.Format("[{0}] : [{1}]", i, j));
 
 		Console.ReadKey();
+	}
+
+	static StringBuilder stringBuilder = new StringBuilder();
+	public static string CustomReadLine()
+	{
+		stringBuilder.Clear();
+		char input;
+		do
+		{
+			input = Console.ReadKey(true).KeyChar;
+			stringBuilder.Append(input, 1);
+			Console.Write((int)input + ' ');
+		} while (input != '\n');
+		return stringBuilder.ToString();
 	}
 }

@@ -19,27 +19,17 @@ class HackerRankSolution
 	// Complete the shortestReach function below.
 	static int[] shortestReach(int n, int[,] edges, int s)
 	{
-		var graph = new Graph<Node>();
-		var convertionStrcuture = new Dictionary<int, Node>();
+		var graph = new Graph();
 
 		for (int i = 1; i <= n; ++i)
-		{
-			convertionStrcuture.Add(i, new Node() { Value = i });
-			graph.Add(convertionStrcuture[i]);
-		}
+			graph.Add(i);
 
 		for (int i = 0; i < edges.GetLength(0); ++i)
-		{
-			graph.AddNotOrientedConnection(convertionStrcuture[edges[i, 0]], convertionStrcuture[edges[i, 1]], edges[i, 2]);
-		}
+			graph.AddNotOrientedConnection(edges[i, 0], edges[i, 1], edges[i, 2]);
 
-		var shortestWays = graph.ShortestLenghts(convertionStrcuture[s]);
-		var result = new List<int>();
-		for (int i = 1; i <= n; ++i)
-		{
-			if (i == s) continue;
-			result.Add(shortestWays[convertionStrcuture[i]] == int.MaxValue ? -1 : shortestWays[convertionStrcuture[i]]);
-		}
+		var shortestWays = graph.ShortestLenghts(s);
+		var result = new List<int>(shortestWays.Select((element) => element.Value == int.MaxValue ? -1 : element.Value));
+		result.RemoveAt(s - 1);
 		return result.ToArray();
 	}
 
@@ -48,18 +38,18 @@ class HackerRankSolution
 		public int Value;
 	}
 
-	protected class Graph<T> where T : class
+	protected class Graph
 	{
-		protected Dictionary<T, Dictionary<T, int>> net = new Dictionary<T, Dictionary<T, int>>();
-		protected PrioritizedQueue<T> queue; //prioritized queue
-		protected HashSet<T> doneNodes = new HashSet<T>();
+		protected Dictionary<int, Dictionary<int, int>> net = new Dictionary<int, Dictionary<int, int>>();
+		protected PrioritizedQueue queue; //prioritized queue
+		protected HashSet<int> doneNodes = new HashSet<int>();
 
-		public void Add(T node)
+		public void Add(int node)
 		{
-			net.Add(node, new Dictionary<T, int>());
+			net.Add(node, new Dictionary<int, int>());
 		}
 
-		public void AddNotOrientedConnection(T from, T to, int weight)
+		public void AddNotOrientedConnection(int from, int to, int weight)
 		{
 			if (net[from].ContainsKey(to) || net[to].ContainsKey(from))
 			{
@@ -73,21 +63,14 @@ class HackerRankSolution
 			}
 		}
 
-		public void AddOrientedConnection(T from, T to, int weight)
+		public Dictionary<int, int> ShortestLenghts(int from)
 		{
-			if (net[from].ContainsKey(to))
-				net[from][to] = weight < net[from][to] ? weight : net[from][to];
-			else net[from].Add(to, weight);
-		}
-
-		public Dictionary<T, int> ShortestLenghts(T from)
-		{
-			var distances = new Dictionary<T, int>(net.Count);
-			queue = new PrioritizedQueue<T>() { Prioritizer = (a, b) => distances[b] - distances[a] };
+			var distances = new Dictionary<int, int>(net.Count);
+			queue = new PrioritizedQueue(net.Count, ref distances);
 			foreach (var node in net)
 				distances[node.Key] = int.MaxValue;
 			distances[from] = 0;
-			var currentNode = from;
+			int currentNode = from;
 			int currentLenght;
 			do
 			{
@@ -103,39 +86,42 @@ class HackerRankSolution
 					}
 				}
 				doneNodes.Add(currentNode);
-				currentNode = queue.ExtractTop();
-			} while (currentNode != null);
+				if (queue.Count < 1)
+					break;
+				currentNode = queue.Dequeue();
+			} while (true);
 			return distances;
 		}
 	}
 
-	protected class PrioritizedQueue<T> where T : class
+	protected class PrioritizedQueue
 	{
-		public Func<T, T, int> Prioritizer;
+		protected List<int> mainArray;
+		protected Dictionary<int, int> distances;
+		protected Dictionary<int, int> elementsIndexes = new Dictionary<int, int>();
+		protected int temp;
+
 		public int Count { get { return mainArray.Count; } }
 
-		protected List<T> mainArray = new List<T>();
-		protected Dictionary<T, int> Positions = new Dictionary<T, int>();
-		protected T temp;
-
-		public bool Contains(T element)
+		public PrioritizedQueue(int maxCapacity, ref Dictionary<int, int> distances)
 		{
-			return Positions.ContainsKey(element);
+			mainArray = new List<int>(maxCapacity);
+			this.distances = distances;
 		}
 
 		protected void SiftDown(int currentIndex)
 		{
 			int left = 2 * currentIndex + 1;
 			int right = 2 * currentIndex + 2;
-			int largestElementIndex = currentIndex;
-			if (left <= mainArray.Count - 1 && Prioritizer(mainArray[left], mainArray[largestElementIndex]) > 0)
-				largestElementIndex = left;
-			if (right <= mainArray.Count - 1 && Prioritizer(mainArray[right], mainArray[largestElementIndex]) > 0)
-				largestElementIndex = right;
-			if (largestElementIndex != currentIndex)
+			int minElementIndex = currentIndex;
+			if (left <= mainArray.Count - 1 && distances[mainArray[left]] > distances[mainArray[minElementIndex]])
+				minElementIndex = left;
+			if (right <= mainArray.Count - 1 && distances[mainArray[right]] > distances[mainArray[minElementIndex]])
+				minElementIndex = right;
+			if (minElementIndex != currentIndex)
 			{
-				Swap(currentIndex, largestElementIndex);
-				SiftDown(largestElementIndex);
+				Swap(currentIndex, minElementIndex);
+				SiftDown(minElementIndex);
 			}
 		}
 
@@ -143,61 +129,53 @@ class HackerRankSolution
 		{
 			while (currentIndex > -1)
 			{
-				int parent = (currentIndex - 1) / 2;
-				if (Prioritizer(mainArray[currentIndex], mainArray[parent]) <= 0)
+				int parentIndex = (currentIndex - 1) / 2;
+				if (distances[mainArray[currentIndex]] >= distances[mainArray[parentIndex]])
 					return;
-				Swap(currentIndex, parent);
-				currentIndex = parent;
+				Swap(currentIndex, parentIndex);
+				currentIndex = parentIndex;
 			}
 		}
 
-		public void UpdateValue(T element)
+		public void UpdateValue(int element)
 		{
-			if (Positions.ContainsKey(element))
+			if (elementsIndexes.ContainsKey(element))
 			{
-				int elementIndex = Positions[element];
-				if (Prioritizer(mainArray[elementIndex], mainArray[(elementIndex - 1) / 2]) > 0)
+				int elementIndex = elementsIndexes[element];
+				if (distances[mainArray[elementIndex]] < distances[mainArray[(elementIndex - 1) / 2]])
 					SiftUp(elementIndex);
 				else
 					SiftDown(elementIndex);
 			}
 		}
 
-		protected void BuildHeap()
+		public void Enqueue(int element)
 		{
-			for (int i = (mainArray.Count - 1) / 2; i >= 0; --i)
-				SiftDown(i);
-		}
-
-		public void Enqueue(T element)
-		{
-			if (!Contains(element))
+			if (!elementsIndexes.ContainsKey(element))
 			{
 				mainArray.Add(element);
-				Positions.Add(element, mainArray.Count - 1);
+				elementsIndexes.Add(element, mainArray.Count - 1);
 				SiftUp(mainArray.Count - 1);
 			}
 		}
 
-		public T ExtractTop()
+		public int Dequeue()
 		{
-			if (mainArray.Count < 1)
-				return null;
-			T result = mainArray[0];
+			int result = mainArray[0];
 			Swap(0, mainArray.Count - 1);
 			mainArray.RemoveAt(mainArray.Count - 1);
-			Positions.Remove(result);
+			elementsIndexes.Remove(result);
 			SiftDown(0);
 			return result;
 		}
 
-		protected void Swap(int a, int b)
+		protected void Swap(int aIndex, int bIndex)
 		{
-			Positions[mainArray[a]] = b;
-			Positions[mainArray[b]] = a;
-			temp = mainArray[a];
-			mainArray[a] = mainArray[b];
-			mainArray[b] = temp;
+			elementsIndexes[mainArray[aIndex]] = bIndex;
+			elementsIndexes[mainArray[bIndex]] = aIndex;
+			temp = mainArray[aIndex];
+			mainArray[aIndex] = mainArray[bIndex];
+			mainArray[bIndex] = temp;
 		}
 	}
 
@@ -211,9 +189,9 @@ class HackerRankSolution
 		{
 			string[] nm = Console.ReadLine().Split(' ');
 
-			int n = Convert.ToInt32(nm[0]);
+			int n = ConvertToInt(nm[0]);
 
-			int m = Convert.ToInt32(nm[1]);
+			int m = ConvertToInt(nm[1]);
 
 			int[,] edges = new int[m, 3];
 
@@ -226,10 +204,10 @@ class HackerRankSolution
 				connection = Console.ReadLine().Split(' ');
 				edges[i, 0] = fastVertexParse[connection[0]];
 				edges[i, 1] = fastVertexParse[connection[1]];
-				edges[i, 2] = ConvertToInt(connection[2]);
+				edges[i, 2] = fastVertexParse.ContainsKey(connection[2]) ? fastVertexParse[connection[2]] : ConvertToInt(connection[2]);
 			}
 
-			int s = Convert.ToInt32(Console.ReadLine());
+			int s = ConvertToInt(Console.ReadLine());
 
 			int[] result = shortestReach(n, edges, s);
 
