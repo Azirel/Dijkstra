@@ -33,20 +33,15 @@ class HackerRankSolution
 		return result.ToArray();
 	}
 
-	protected class Node
-	{
-		public int Value;
-	}
-
 	protected class Graph
 	{
 		protected Dictionary<int, Dictionary<int, int>> net = new Dictionary<int, Dictionary<int, int>>();
 		protected PrioritizedQueue queue; //prioritized queue
 		protected HashSet<int> doneNodes = new HashSet<int>();
 
-		public void Add(int node)
+		public void Add(int vertex)
 		{
-			net.Add(node, new Dictionary<int, int>());
+			net.Add(vertex, new Dictionary<int, int>());
 		}
 
 		public void AddNotOrientedConnection(int from, int to, int weight)
@@ -114,9 +109,9 @@ class HackerRankSolution
 			int left = 2 * currentIndex + 1;
 			int right = 2 * currentIndex + 2;
 			int minElementIndex = currentIndex;
-			if (left <= mainArray.Count - 1 && distances[mainArray[left]] > distances[mainArray[minElementIndex]])
+			if (left < mainArray.Count && distances[mainArray[left]] > distances[mainArray[minElementIndex]])
 				minElementIndex = left;
-			if (right <= mainArray.Count - 1 && distances[mainArray[right]] > distances[mainArray[minElementIndex]])
+			if (right < mainArray.Count && distances[mainArray[right]] > distances[mainArray[minElementIndex]])
 				minElementIndex = right;
 			if (minElementIndex != currentIndex)
 			{

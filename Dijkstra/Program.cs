@@ -11,6 +11,7 @@ using System.Runtime.Serialization;
 using System.Text.RegularExpressions;
 using System.Text;
 using System;
+using System.Diagnostics;
 //using Dijkstra.NET.Graph;
 //using Dijkstra.NET.ShortestPath;
 
@@ -31,7 +32,11 @@ class Solution
 		foreach (var edge in edges)
 			graph.AddNotOrientedConnection(convertionStrcuture[edge[0]], convertionStrcuture[edge[1]], edge[2]);
 
+		Stopwatch algorithmTimer = new Stopwatch();
+		algorithmTimer.Start();
 		var shortestWays = graph.ShortestLenghts(convertionStrcuture[s]);
+		algorithmTimer.Stop();
+		Console.WriteLine(algorithmTimer.Elapsed);
 		var result = new List<int>();
 		for (int i = 1; i <= n; ++i)
 		{
@@ -201,17 +206,15 @@ class Solution
 
 	static void Main(string[] args)
 	{
-		//RunGraphTest();
-		int a = 0;
-		int b = 0;
-		var test = new Dictionary<int, int> { { a, 0 }, { b, 0 } };
-		Console.WriteLine(test.Count);
-		//Console.WriteLine(CustomReadLine());
+		while (Console.ReadKey().KeyChar != ' ')
+			RunGraphTest();
 	}
 
 	protected static void RunGraphTest()
 	{
-		string InputFilePath = Path.Combine(Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent.FullName, "GraphTest1[Input]");
+		Stopwatch IOTimer = new Stopwatch();
+		IOTimer.Start();
+		string InputFilePath = Path.Combine(Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent.FullName, "GraphTest7[Input]");
 		string OutputFilePath = Path.Combine(Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent.FullName, "GraphTest1[Output]");
 
 		var _inputs = new List<int>();
@@ -231,6 +234,7 @@ class Solution
 
 		int currentReadPosition = 0;
 		int[][] calculatedOutput = new int[_inputs[0]][];
+
 		for (int graphsCount = 0; graphsCount < _inputs[0]; ++graphsCount)
 		{
 			int n = _inputs[++currentReadPosition];
@@ -239,18 +243,22 @@ class Solution
 			for (int i = 0; i < m; ++i)
 				edges[i] = new int[] { _inputs[++currentReadPosition], _inputs[++currentReadPosition], _inputs[++currentReadPosition] };
 			int s = _inputs[++currentReadPosition];
-
+			IOTimer.Stop();
 			int[] result = shortestReach(n, edges, s);
+			IOTimer.Start();
 			calculatedOutput[graphsCount] = result;
 			Console.WriteLine(string.Join(" ", result));
 		}
 
-		for (int i = 0; i < calculatedOutput.Length; i++)
-			for (int j = 0; j < calculatedOutput[i].Length; ++j)
-				if (calculatedOutput[i][j] != givenOutput[i][j])
-					Console.WriteLine(string.Format("[{0}] : [{1}]", i, j));
+		//for (int i = 0; i < calculatedOutput.Length; i++)
+		//	for (int j = 0; j < calculatedOutput[i].Length; ++j)
+		//		if (calculatedOutput[i][j] != givenOutput[i][j])
+		//			Console.WriteLine(string.Format("[{0}] : [{1}]", i, j));
 
-		Console.ReadKey();
+		//Console.WriteLine(string.Format("{0:00}:{1:00}:{2:00}.{3:00}",
+		//	algorithmTimer.Elapsed.Hours, algorithmTimer.Elapsed.Minutes, algorithmTimer.Elapsed.Seconds,
+		//	algorithmTimer.Elapsed.Milliseconds / 10));
+		Console.WriteLine(IOTimer.Elapsed);
 	}
 
 	static StringBuilder stringBuilder = new StringBuilder();
